@@ -1,4 +1,4 @@
-import * as THREE from '/vendor/three.module.js';
+import * as THREE from './vendor/three.module.js';
 
 const initial = [
   { id: 'actimel', name: 'Actimel', category: 'dairy', slot: 0, baseRevenue: 1170, color: '#d75248' },
