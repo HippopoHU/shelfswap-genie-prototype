@@ -46,9 +46,34 @@ function moveMeshes(immediate=false) { products.forEach(p=>{const target={x:-2.5
 function animate(){ requestAnimationFrame(animate); meshes.forEach(m=>{if(m.userData.target)m.position.lerp(m.userData.target,.095)}); renderer.render(scene,camera); }
 function resize(){const holder=document.querySelector('#scene');const w=holder.clientWidth,h=holder.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();} window.addEventListener('resize',resize); resize(); buildProducts(); animate();
 
-async function run(path, payload) { const response=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); const body=await response.json(); if(!response.ok) throw new Error(body.error || 'Simulation failed'); return body; }
+function project(products) {
+  const before = products.reduce((sum, p) => sum + p.baseRevenue, 0);
+  const rows = products.map((p) => {
+    const visibility = 1 + (products.length - 1 - p.slot) * .035;
+    const adjacency = p.category === 'snacks' && p.slot <= 1 ? 1.04 : 1;
+    return { ...p, simulatedRevenue: Math.round(p.baseRevenue * visibility * adjacency) };
+  });
+  const after = rows.reduce((sum, p) => sum + p.simulatedRevenue, 0);
+  const revenueDelta = after - before;
+  const winner = rows.reduce((best, p) => p.simulatedRevenue - p.baseRevenue > best.simulatedRevenue - best.baseRevenue ? p : best, rows[0]);
+  return { before, after, revenueDelta, marginDelta: Math.round(revenueDelta * .31), unitsDelta: Math.round(revenueDelta / 3.7), products: rows, winner };
+}
+function explain(result, prefix = '') { return `${prefix}${result.winner.name} gains visibility in slot ${result.winner.slot + 1}, nearer the customer sightline. The model estimates ${Math.round((result.winner.simulatedRevenue / result.winner.baseRevenue - 1) * 100)}% lift for that item; snack adjacency is weighted as a secondary demand signal.`; }
+function simulateLocal(leftId, rightId) {
+  const swapped = products.map(p => ({ ...p }));
+  const a = swapped.find(p => p.id === leftId), b = swapped.find(p => p.id === rightId);
+  [a.slot, b.slot] = [b.slot, a.slot];
+  const result = project(swapped); return { ...result, explanation: explain(result) };
+}
+function optimizeLocal() {
+  let best; const arrange = (remaining, placed) => {
+    if (!remaining.length) { const candidate = project(placed.map((p, slot) => ({ ...p, slot }))); if (!best || candidate.after > best.after) best = candidate; return; }
+    remaining.forEach((item, index) => arrange(remaining.filter((_, i) => i !== index), [...placed, item]));
+  };
+  arrange(products, []); return { ...best, explanation: explain(best, 'Whole-shelf optimization complete. ') };
+}
 function apply(result,label) { products=result.products.map(p=>({...p,color:initial.find(i=>i.id===p.id).color})); selected=[]; moveMeshes(); renderList(); highlight(); document.querySelector('#scenario-label').textContent=label; document.querySelector('#revenue').textContent=`+${fmt.format(result.revenueDelta)}`; document.querySelector('#revenue-detail').textContent=`${fmt.format(result.before)} → ${fmt.format(result.after)} weekly`; document.querySelector('#margin').textContent=`+${fmt.format(result.marginDelta)}`; document.querySelector('#units').textContent=`+${result.unitsDelta.toLocaleString()}`; document.querySelector('#explanation').textContent=result.explanation; document.querySelector('#results').scrollIntoView({behavior:'smooth',block:'nearest'}); }
-swapButton.onclick=async()=>{try{swapButton.disabled=true;swapButton.textContent='Running scenario…';apply(await run('/api/simulate',{products,leftId:selected[0],rightId:selected[1]}),'Swap scenario applied');}catch(e){alert(e.message)}finally{swapButton.textContent='Simulate shelf swap →';swapButton.disabled=selected.length!==2;}};
-optimizeButton.onclick=async()=>{try{optimizeButton.disabled=true;optimizeButton.textContent='Optimizing 720 layouts…';apply(await run('/api/optimize',{products}),'Best of 720 shelf layouts');}catch(e){alert(e.message)}finally{optimizeButton.disabled=false;optimizeButton.innerHTML='Optimize entire shelf <span>✦</span>';}};
+swapButton.onclick=()=>{try{swapButton.disabled=true;swapButton.textContent='Running scenario…';apply(simulateLocal(selected[0],selected[1]),'Swap scenario applied');}catch(e){alert(e.message)}finally{swapButton.textContent='Simulate shelf swap →';swapButton.disabled=selected.length!==2;}};
+optimizeButton.onclick=()=>{try{optimizeButton.disabled=true;optimizeButton.textContent='Optimizing 720 layouts…';apply(optimizeLocal(),'Best of 720 shelf layouts');}catch(e){alert(e.message)}finally{optimizeButton.disabled=false;optimizeButton.innerHTML='Optimize entire shelf <span>✦</span>';}};
 document.querySelector('#reset').onclick=()=>{products=structuredClone(initial);selected=[];moveMeshes();renderList();highlight();document.querySelector('#scenario-label').textContent='Shelf reset';};
 renderList();
