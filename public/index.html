@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShelfSwap Genie</title><link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header><div class="brand"><span class="mark">✦</span><span>ShelfSwap</span><em>GENIE</em></div><div class="status"><i></i> Demo scenario · local model</div></header>
+  <main>
+    <section class="intro"><p class="eyebrow">RETAIL DECISION STUDIO</p><h1>Put every product<br>in its <span>best place.</span></h1><p class="sub">Select two products, swap their shelf positions, then let Genie explain the projected commercial impact.</p></section>
+    <section class="workspace">
+      <div class="scene-card"><div class="scene-top"><div><b>Northside Market</b><span> · aisle 04 / snack bay</span></div><button id="reset">Reset shelf</button></div><div id="scene"></div><div class="scene-footer"><span><b>How to use</b> Select two product cards below, then run the swap.</span><span class="legend"><i></i> selected</span></div></div>
+      <aside class="control-card"><div class="panel-title"><span>01</span><div><b>Choose products</b><small>Two products will exchange places</small></div></div><div id="product-list" class="product-list"></div><button id="simulate" disabled>Simulate shelf swap <span>→</span></button><button id="optimize">Optimize entire shelf <span>✦</span></button><p class="tiny">Demo only. Revenue projections use transparent sample assumptions, not a production demand model.</p></aside>
+    </section>
+    <section class="results" id="results" aria-live="polite"><div class="results-heading"><div><p class="eyebrow">GENIE FORECAST</p><h2>Expected outcome</h2></div><div class="pill" id="scenario-label">Pick products to begin</div></div><div class="metrics"><article><p>Revenue / week</p><strong id="revenue">—</strong><span id="revenue-detail">Baseline required</span></article><article><p>Gross margin</p><strong id="margin">—</strong><span>Estimated at 31% flow-through</span></article><article><p>Units sold</p><strong id="units">—</strong><span>Basket conversion signal</span></article></div><article class="genie"><div class="genie-orb">✦</div><div><p class="eyebrow">GENIE EXPLAINS</p><p id="explanation">Choose a pair to reveal the causal story behind the KPI shift.</p></div></article></section>
+  </main><script type="module" src="/app.js"></script>
+</body></html>

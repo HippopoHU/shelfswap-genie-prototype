@@ -1,0 +1,14 @@
+{
+  "name": "shelfswap-genie-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "NODE_ENV=test node --test",
+    "model": "blender --background --python scripts/create_shelf.py -- --output public/assets/shelf-demo.glb"
+  },
+  "dependencies": {
+    "three": "^0.181.1"
+  }
+}
