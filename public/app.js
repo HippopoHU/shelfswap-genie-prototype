@@ -28,7 +28,7 @@ function highlight() { meshes.forEach((mesh, id) => { mesh.material.emissive.set
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#ece8df');
 const camera = new THREE.PerspectiveCamera(34, 1, .1, 100); camera.position.set(0, 1.6, 9);
-const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true;
 document.querySelector('#scene').append(renderer.domElement);
 scene.add(new THREE.HemisphereLight('#fffaf1', '#253047', 2.2));
 const key = new THREE.DirectionalLight('#fff3d3', 3.2); key.position.set(-3,6,4); scene.add(key);
@@ -39,8 +39,17 @@ function box(w,h,d,material,x,y,z) { const m = new THREE.Mesh(new THREE.BoxGeome
 for (const x of [-3.25,3.25]) box(.14,5.3,.45,metal,x,1.1,0);
 for (const y of [-1.35,.15,1.65,3.15]) { box(6.65,.13,.62,metal,0,y,0); box(6.65,.12,.09,wood,0,y-.12,-.34); }
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(18,12), new THREE.MeshStandardMaterial({color:'#dad5c9',roughness:1})); floor.rotation.x=-Math.PI/2; floor.position.y=-1.47; scene.add(floor);
+function labelTexture(product) {
+  const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 512;
+  const ctx = canvas.getContext('2d'); ctx.fillStyle = product.color; ctx.fillRect(0, 0, 256, 512);
+  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(15, 16, 226, 9); ctx.fillRect(15, 487, 226, 9);
+  ctx.fillStyle = '#fffdf7'; ctx.textAlign = 'center'; ctx.font = '700 29px Manrope, Arial';
+  const words = product.name.split(' '); ctx.fillText(words[0], 128, 235); if (words[1]) ctx.fillText(words.slice(1).join(' '), 128, 271);
+  ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.font = '16px Arial'; ctx.fillText('SHELF DEMO', 128, 310);
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; return texture;
+}
 function buildProducts() {
-  products.forEach(p => { const geometry = p.category === 'snacks' ? new THREE.BoxGeometry(.67,.78,.34) : new THREE.CylinderGeometry(.25,.28,.96,24); const material=new THREE.MeshStandardMaterial({color:p.color,roughness:.35,metalness:.06,emissive:'#000000'}); const mesh=new THREE.Mesh(geometry,material); mesh.userData.id=p.id; shelf.add(mesh); meshes.set(p.id,mesh); }); moveMeshes(true);
+  products.forEach(p => { const geometry = p.category === 'snacks' ? new THREE.BoxGeometry(.67,.78,.34) : new THREE.CylinderGeometry(.25,.28,.96,24); const material=new THREE.MeshStandardMaterial({color:'#ffffff',map:labelTexture(p),roughness:.35,metalness:.06,emissive:'#000000'}); const mesh=new THREE.Mesh(geometry,material); mesh.userData.id=p.id; mesh.castShadow = true; shelf.add(mesh); meshes.set(p.id,mesh); }); moveMeshes(true);
 }
 function moveMeshes(immediate=false) { products.forEach(p=>{const target={x:-2.55+p.slot*1.02,y:.72,z:-.18}; const m=meshes.get(p.id); m.userData.target=target; if(immediate)m.position.set(target.x,target.y,target.z);}); }
 function animate(){ requestAnimationFrame(animate); meshes.forEach(m=>{if(m.userData.target)m.position.lerp(m.userData.target,.095)}); renderer.render(scene,camera); }
