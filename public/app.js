@@ -64,17 +64,19 @@ function resize(){const holder=document.querySelector('#scene');const w=holder.c
 
 function project(products) {
   const before = products.reduce((sum, p) => sum + p.baseRevenue, 0);
+  const attention = stores[activeStore].attention;
   const rows = products.map((p) => {
-    const visibility = 1 + (products.length - 1 - p.slot) * .035;
-    const adjacency = p.category === 'snacks' && p.slot <= 1 ? 1.04 : 1;
-    return { ...p, simulatedRevenue: Math.round(p.baseRevenue * visibility * adjacency) };
+    const attentionRank = attention[p.slot];
+    const visibility = 1 + (attentionRank - 3.5) * .035;
+    const adjacency = p.company === 'Danone' && p.category === 'dairy' && p.slot <= 1 ? 1.025 : 1;
+    return { ...p, attentionRank, simulatedRevenue: Math.round(p.baseRevenue * visibility * adjacency) };
   });
   const after = rows.reduce((sum, p) => sum + p.simulatedRevenue, 0);
   const revenueDelta = after - before;
   const winner = rows.reduce((best, p) => p.simulatedRevenue - p.baseRevenue > best.simulatedRevenue - best.baseRevenue ? p : best, rows[0]);
   return { before, after, revenueDelta, marginDelta: Math.round(revenueDelta * .31), unitsDelta: Math.round(revenueDelta / 3.7), products: rows, winner };
 }
-function explain(result, prefix = '') { return `${prefix}${result.winner.name} gains visibility in slot ${result.winner.slot + 1}, nearer the customer sightline. The model estimates ${Math.round((result.winner.simulatedRevenue / result.winner.baseRevenue - 1) * 100)}% lift for that item; snack adjacency is weighted as a secondary demand signal.`; }
+function explain(result, prefix = '') { return `${prefix}${result.winner.name} moves into a historical eye-attention rank of ${result.winner.attentionRank}/6 at ${stores[activeStore].name}. That visibility signal and Danone dairy adjacency drive an estimated ${Math.round((result.winner.simulatedRevenue / result.winner.baseRevenue - 1) * 100)}% lift for the item.`; }
 function simulateLocal(leftId, rightId) {
   const swapped = products.map(p => ({ ...p }));
   const a = swapped.find(p => p.id === leftId), b = swapped.find(p => p.id === rightId);
